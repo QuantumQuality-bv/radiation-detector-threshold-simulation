@@ -1,0 +1,4 @@
+detector_id,detector_type,background_cpm,response_gain,integration_time_s,notes
+D001,NaI_Tl_proxy,7200,1.0,60,Synthetic portable gamma detector proxy
+D002,GM_proxy,1800,0.6,60,Synthetic low-cost survey detector proxy
+D003,Ion_chamber_proxy,9500,0.8,60,Synthetic area monitor proxy

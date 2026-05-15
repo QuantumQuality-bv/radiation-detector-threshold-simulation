@@ -1,0 +1,32 @@
+{
+  "random_seed": 42,
+  "python_version": "3.13.5",
+  "numpy_version": "2.3.5",
+  "scipy_version": "1.17.0",
+  "matplotlib_version": "3.10.8",
+  "duration_minutes": 120,
+  "integration_time_s": 60.0,
+  "number_of_time_bins": 120,
+  "background_cpm": 7200.0,
+  "event_intervals": [
+    {
+      "start_min": 45,
+      "end_min": 55
+    },
+    {
+      "start_min": 85,
+      "end_min": 90
+    }
+  ],
+  "event_added_counts": [
+    350.0,
+    650.0
+  ],
+  "threshold_sigmas": [
+    2,
+    3,
+    4,
+    5
+  ],
+  "script_run_timestamp": "2026-05-15T21:38:19.050283+00:00"
+}

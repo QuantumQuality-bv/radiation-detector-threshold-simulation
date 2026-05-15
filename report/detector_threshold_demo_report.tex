@@ -1,0 +1,412 @@
+\documentclass[11pt,twocolumn]{article}
+
+% ============================================================
+% Portable Radiation Detector Background and Threshold Simulation
+% ============================================================
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[top=0.85in,bottom=0.9in,left=0.68in,right=0.68in]{geometry}
+\usepackage{amsmath,amssymb,mathtools}
+\usepackage{siunitx}
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{xurl}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage[font=small,labelfont=bf]{caption}
+\usepackage{placeins}
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+\usepackage[capitalize,nameinlink]{cleveref}
+
+\definecolor{sourceblue}{rgb}{0.04,0.18,0.45}
+\definecolor{placeholdergray}{gray}{0.42}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=sourceblue,
+  citecolor=sourceblue,
+  urlcolor=sourceblue,
+  pdftitle={Portable Radiation Detector Background and Threshold Simulation},
+  pdfauthor={Brendan Velasquez}
+}
+
+\setlength{\columnsep}{0.28in}
+\setlength{\headheight}{14pt}
+\setlist[itemize]{leftmargin=1.1em,itemsep=1pt,topsep=2pt}
+\setlist[enumerate]{leftmargin=1.2em,itemsep=1pt,topsep=2pt}
+\raggedbottom
+\emergencystretch=3em
+\allowdisplaybreaks[1]
+
+\sisetup{
+  scientific-notation=true,
+  round-mode=figures,
+  round-precision=4
+}
+
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
+
+\newcommand{\counts}{\mathrm{counts}}
+\newcommand{\Pois}{\operatorname{Poisson}}
+
+\graphicspath{{images/}{../figures/}{./}}
+\DeclareGraphicsExtensions{.png,.pdf,.jpg,.jpeg}
+
+\newcommand{\safeincludegraphics}[2][]{%
+  \begingroup
+  \IfFileExists{images/#2}{%
+    \includegraphics[#1]{images/#2}%
+  }{%
+    \IfFileExists{../figures/#2}{%
+      \includegraphics[#1]{../figures/#2}%
+    }{%
+      \IfFileExists{#2}{%
+        \includegraphics[#1]{#2}%
+      }{%
+        \fbox{%
+          \begin{minipage}{0.88\linewidth}
+          \centering\small\itshape
+          Missing figure file:\par\medskip
+          {\ttfamily\detokenize{images/#2}}%
+          \end{minipage}%
+        }%
+      }%
+    }%
+  }%
+  \endgroup
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{Brendan Velasquez}
+\fancyhead[R]{Detector Threshold Simulation}
+\fancyfoot[C]{\thepage~of~\pageref{LastPage}}
+
+\title{Portable Radiation Detector Background and Threshold Simulation\\[0.25em]
+\large A Synthetic Study of Counting Statistics, Threshold Crossings, and Detector QA Interpretation}
+\author{Brendan Velasquez}
+\date{\today}
+
+\begin{document}
+
+\twocolumn[
+\begin{@twocolumnfalse}
+\maketitle
+\begin{abstract}
+This report evaluates a reproducible detector-counting workflow for background estimation, controlled elevated-count intervals, n-sigma thresholding, analytical Poisson exceedance probabilities, Monte Carlo crossing summaries, and measurement-quality interpretation. Gross counts are simulated over one-minute integration intervals for a single synthetic detector. A background-only sequence estimates local count variability, and a signal-plus-background sequence tests threshold behavior during two controlled count increases. The analysis combines finite-sample crossings, analytical tail probabilities, and repeated-trial simulations. Increasing the threshold multiplier reduces background-only crossings, but it also reduces elevated-bin crossing fraction and can delay first event crossing.
+\end{abstract}
+\vspace{1.0em}
+\end{@twocolumnfalse}
+]
+
+% ============================================================
+\section{Introduction}
+
+Portable radiation detectors and area monitors are commonly interpreted through count-rate behavior relative to local background. Even when the instrument response is reduced to gross counts, the interpretation is statistical: background-count fluctuations, integration time, and threshold selection jointly determine how often a sequence crosses a chosen review level. Standard detector references treat background, counting statistics, dead time, calibration, and detector response as central elements of radiation-measurement practice \cite{Knoll2010}. Currie's detection-limit framework provides the classic statistical language for distinguishing decision thresholds, detectable signals, quantitative determination, and false-positive or false-negative behavior in radiochemical measurement problems \cite{Currie1968}.
+
+Formal treatment of characteristic limits in ionizing-radiation measurement is addressed in ISO 11929, which covers decision thresholds, detection limits, and coverage intervals for non-negative ionizing-radiation measurands under counting measurements \cite{ISO11929}. MARLAP provides complementary radioanalytical guidance on project planning, measurement uncertainty, detection and quantification capability, and data-quality requirements \cite{MARLAP2004}. The implemented workflow uses a transparent Poisson gross-count model, n-sigma thresholds, analytical tail probabilities, and repeated-trial simulation.
+
+The calculation uses a controlled background-only count sequence and a separate signal-plus-background count sequence with two elevated-count intervals. The analysis estimates background statistics, computes thresholds for \(n=2,3,4,5\), identifies crossings, computes analytical Poisson exceedance probabilities, and summarizes empirical and Monte Carlo crossing behavior. Thresholds are statistical review levels for synthetic gross-count data; no count-to-dose conversion, radionuclide-specific interpretation, or instrument-certification claim is made.
+
+% ============================================================
+\section{Statistical Model}
+
+For a fixed integration interval, the background-only count in time bin \(t\) is modeled as
+\begin{equation}
+N_B(t) \sim \Pois(\lambda_B),
+\label{eq:background-poisson}
+\end{equation}
+where \(\lambda_B\) is the expected background count per interval. The Poisson model is a standard starting point for independent counting processes, and the large-count normal approximation gives the familiar square-root standard deviation used in radiation-counting practice \cite{Knoll2010,NISTHandbook}:
+\begin{equation}
+\sigma_B \approx \sqrt{B},
+\label{eq:poisson-std}
+\end{equation}
+where \(B\) denotes the estimated background mean count per interval.
+
+The signal-plus-background sequence is modeled as
+\begin{equation}
+N(t) \sim \Pois\!\left(\lambda_B+\lambda_S(t)\right),
+\label{eq:signal-poisson}
+\end{equation}
+where \(\lambda_S(t)\) is nonzero only during the controlled count increases. For threshold multiplier \(n\), the review threshold is
+\begin{equation}
+T_n = B+n\sigma_B.
+\label{eq:threshold}
+\end{equation}
+A threshold crossing is recorded when
+\begin{equation}
+N(t)>T_n.
+\label{eq:crossing}
+\end{equation}
+
+The empirical background-only false-positive proxy is
+\begin{equation}
+\widehat{\mathrm{FP}}_n=
+\frac{\#\{t:N_B(t)>T_n\}}{\#\{t:N_B(t)\ \mathrm{observed}\}}.
+\label{eq:false-positive-proxy}
+\end{equation}
+Because \(\widehat{\mathrm{FP}}_n\) is computed from a finite sequence, it is reported alongside an analytical Poisson exceedance probability,
+\begin{equation}
+p_n = \Pr(X>T_n),\qquad X\sim\Pois(B).
+\label{eq:poisson-tail}
+\end{equation}
+For \(m\) independent background-only intervals, the expected number of background-only threshold crossings is
+\begin{equation}
+E[C_n]=mp_n,
+\label{eq:expected-crossings}
+\end{equation}
+and the probability of at least one background-only threshold crossing is
+\begin{equation}
+\Pr(C_n\ge 1)=1-(1-p_n)^m.
+\label{eq:at-least-one}
+\end{equation}
+These analytical quantities provide a model-based check on the finite-sample crossing fractions.
+
+% ============================================================
+\section{Synthetic Experiment Design}
+
+The simulation uses detector D001, a synthetic NaI(Tl)-proxy gross-count detector. The counting duration is 120 minutes with a 60 s integration interval, producing 120 time bins per scenario. The expected background is \(7200\) counts per minute. A fixed random seed of 42 is used for the reproducible single-run sequence.
+
+The signal-plus-background scenario contains two controlled count increases: minutes 45--55 with an added mean signal of 350 counts/min, and minutes 85--90 with an added mean signal of 650 counts/min. The intervals are treated as half-open ranges, so the first contains 10 one-minute bins and the second contains 5 one-minute bins.
+
+\begin{table}[!htbp]
+\centering
+\scriptsize
+\caption{Synthetic detector configuration included in the input file. The analysis in this report uses D001.}
+\label{tab:config}
+\begin{tabular}{L{0.17\linewidth} L{0.28\linewidth} C{0.17\linewidth} C{0.16\linewidth}}
+\toprule
+ID & Detector proxy & Background & Integration \\
+ & & counts/min & s \\
+\midrule
+D001 & NaI(Tl) proxy & 7200 & 60 \\
+D002 & GM proxy & 1800 & 60 \\
+D003 & Ion chamber proxy & 9500 & 60 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Using the nominal background value, the large-count standard-deviation approximation is
+\begin{equation}
+\sqrt{7200}=84.85\;\counts.
+\end{equation}
+The corresponding nominal thresholds are \(7454.56\) counts for \(3\sigma\) and \(7624.26\) counts for \(5\sigma\).
+
+% ============================================================
+\section{Analysis Procedure}
+
+The analysis proceeds in six steps. First, the background-only data are used to estimate the mean background count, sample standard deviation, and Poisson standard deviation. Second, thresholds are computed for \(n=2,3,4,5\) using \cref{eq:threshold}. Third, all count values above threshold are written to a crossing table with scenario, detector ID, threshold multiplier, time, observed count, excess count, and event-interval status. Fourth, analytical Poisson tail probabilities are computed using \cref{eq:poisson-tail}--\cref{eq:at-least-one}. Fifth, the signal-plus-background sequence is summarized over the 15 elevated bins. Sixth, repeated Monte Carlo trials estimate run-to-run variability in background and elevated-bin crossing metrics.
+
+The fixed-seed background-only sequence gives a mean of \(7192.22\) counts per 60 s interval, a sample standard deviation of \(82.89\) counts, and a Poisson standard deviation of \(84.81\) counts. The thresholds computed from these values are shown in \cref{tab:thresholds}.
+
+\begin{table}[!htbp]
+\centering
+\scriptsize
+\caption{Threshold values computed from the background-only sequence.}
+\label{tab:thresholds}
+\begin{tabular}{C{0.20\linewidth} C{0.34\linewidth}}
+\toprule
+Multiplier \(n\) & Threshold \(T_n\) counts \\
+\midrule
+2 & 7361.83 \\
+3 & 7446.64 \\
+4 & 7531.44 \\
+5 & 7616.25 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ============================================================
+\section{Results}
+
+\Cref{fig:background} shows the background-only count sequence. Four of the 120 background intervals cross the 2-sigma threshold; none cross the 3-sigma, 4-sigma, or 5-sigma thresholds in this fixed-seed realization.
+
+\begin{figure}[!htbp]
+\centering
+\safeincludegraphics[width=\linewidth]{background_only_counts_matlab.png}
+\caption{Background-only D001 gross-count sequence over 120 one-minute intervals. Horizontal lines show the estimated background mean and selected n-sigma thresholds computed from the background-only realization.}
+\label{fig:background}
+\end{figure}
+
+\Cref{fig:signal} shows the sequence with controlled count increases. The two intervals rise above local background variability, although not every elevated bin crosses every threshold. At the 2-sigma threshold, the sequence can also cross outside the elevated intervals due to ordinary count fluctuation, so the event-focused summaries below use only the 15 elevated bins.
+
+\begin{figure}[!htbp]
+\centering
+\safeincludegraphics[width=\linewidth]{signal_plus_background_counts_matlab.png}
+\caption{Signal-plus-background D001 gross-count sequence. Shaded regions mark the two controlled elevated-count intervals, and horizontal lines show the 3-sigma and 5-sigma thresholds.}
+\label{fig:signal}
+\end{figure}
+
+\begin{table*}[!t]
+\centering
+\scriptsize
+\caption{Single-run empirical and analytical threshold-crossing summary. Analytical values use \(X\sim\Pois(B)\), \(B=7192.22\), and \(m=120\) background-only intervals.}
+\label{tab:false-positive}
+\begin{tabular}{C{0.06\textwidth} C{0.13\textwidth} C{0.10\textwidth} C{0.15\textwidth} C{0.14\textwidth} C{0.16\textwidth} C{0.14\textwidth}}
+\toprule
+\(n\) &
+Background crossings &
+\(\widehat{\mathrm{FP}}_n\) &
+\(p_n=\Pr(X>T_n)\) &
+\(120p_n\) &
+\(\Pr(C_n\ge 1)\) &
+Event crossing fraction \\
+\midrule
+2 & 4/120 & 0.0333 & \(\num{2.328e-2}\) & 2.79 & 0.9408 & 1.0000 \\
+3 & 0/120 & 0.0000 & \(\num{1.428e-3}\) & 0.171 & 0.1576 & 0.9333 \\
+4 & 0/120 & 0.0000 & \(\num{3.568e-5}\) & 0.00428 & 0.00427 & 0.7333 \\
+5 & 0/120 & 0.0000 & \(\num{3.583e-7}\) & \(\num{4.30e-5}\) & \(\num{4.30e-5}\) & 0.6000 \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+The single-run values in \cref{tab:false-positive} are consistent with the analytical tail probabilities. For \(n=2\), the model predicts \(2.79\) expected crossings in 120 background intervals, and the fixed-seed sequence gives four crossings. For \(n=3\), the probability of at least one background crossing in a two-hour run is 0.1576, so a zero-crossing realization is plausible. The 4-sigma and 5-sigma background crossing probabilities are much smaller over the same window.
+
+\begin{table*}[!t]
+\centering
+\scriptsize
+\caption{Monte Carlo threshold-crossing summary from 10,000 repeated simulations. The background columns use 120-bin background-only trials. The event columns use the 15 elevated bins per signal-plus-background trial.}
+\label{tab:monte-carlo}
+\begin{tabular}{C{0.05\textwidth} C{0.13\textwidth} C{0.12\textwidth} C{0.14\textwidth} C{0.14\textwidth} C{0.15\textwidth} C{0.13\textwidth}}
+\toprule
+\(n\) &
+Mean \(\widehat{\mathrm{FP}}_n\) &
+95th pct. \(\widehat{\mathrm{FP}}_n\) &
+MC \(\Pr(C_n\ge 1)\) &
+Analytical \(\Pr(C_n\ge 1)\) &
+Mean event crossing fraction &
+Median first event crossing \\
+\midrule
+2 & 0.0234 & 0.0500 & 0.9481 & 0.9408 & 0.9877 & 45 min \\
+3 & 0.00141 & 0.00833 & 0.1574 & 0.1576 & 0.9090 & 45 min \\
+4 & \(\num{3.25e-5}\) & 0.0000 & 0.0039 & 0.00427 & 0.6983 & 45 min \\
+5 & 0.0000 & 0.0000 & 0.0000 & \(\num{4.30e-5}\) & 0.4620 & 48 min \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\Cref{tab:monte-carlo} gives run-to-run context. The Monte Carlo estimates match the analytical background probabilities well for 2-sigma through 4-sigma thresholds. For 5-sigma, the analytical probability of at least one background crossing in a 120-bin trial is only \(\num{4.30e-5}\); observing zero such trials in 10,000 repetitions is therefore reasonable. The mean elevated-bin crossing fraction falls from 0.9877 at \(2\sigma\) to 0.4620 at \(5\sigma\), and the median first crossing shifts from 45 min to 48 min at \(5\sigma\).
+
+\begin{table}[!htbp]
+\centering
+\scriptsize
+\caption{First threshold-crossing times inside the elevated intervals for the fixed-seed signal-plus-background sequence.}
+\label{tab:first-crossings}
+\begin{tabular}{C{0.18\linewidth} C{0.34\linewidth} C{0.29\linewidth}}
+\toprule
+\(n\) & First event crossing & Threshold counts \\
+\midrule
+2 & 45 min & 7361.83 \\
+3 & 45 min & 7446.64 \\
+4 & 45 min & 7531.44 \\
+5 & 46 min & 7616.25 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\Cref{fig:zoom} focuses on the first elevated interval. The first 3-sigma crossing occurs at minute 45, while the first 5-sigma crossing occurs at minute 46. The one-minute difference illustrates that threshold multiplier affects both crossing probability and apparent response timing.
+
+\begin{figure}[!htbp]
+\centering
+\safeincludegraphics[width=\linewidth]{threshold_crossing_zoom_matlab.png}
+\caption{Zoomed view of the first controlled elevated-count interval. Markers identify the first 3-sigma and 5-sigma crossings observed in the interval.}
+\label{fig:zoom}
+\end{figure}
+
+\begin{figure}[!htbp]
+\centering
+\safeincludegraphics[width=\linewidth]{false_positive_rate_vs_threshold_matlab.png}
+\caption{Background threshold-crossing behavior versus threshold multiplier. The plot compares the fixed-run empirical crossing fraction, analytical Poisson exceedance probability, and analytical probability of at least one background crossing in 120 intervals.}
+\label{fig:false-positive}
+\end{figure}
+
+% ============================================================
+\section{Discussion}
+
+The simulation shows the central tradeoff in n-sigma thresholding. A lower multiplier is more sensitive to modest count increases but produces more background crossings. A higher multiplier suppresses background excursions but misses or delays some elevated bins. In the fixed-seed run, the background crossing fraction decreases from 0.0333 at \(2\sigma\) to zero at \(3\sigma\) and above. Over the 15 elevated bins, the event crossing fraction decreases from 1.0000 at \(2\sigma\) to 0.6000 at \(5\sigma\).
+
+The analytical and Monte Carlo summaries prevent overinterpreting a single sequence. A zero empirical crossing count at \(3\sigma\) does not imply a zero background crossing probability; it means the fixed 120-bin sequence did not sample a threshold exceedance. The analytical probability of at least one \(3\sigma\) background crossing over 120 independent intervals is approximately 0.158, and the Monte Carlo estimate is 0.1574. This distinction between finite-sample observations and model-based tail probabilities is central to statistical measurement interpretation \cite{NISTHandbook,Currie1968}.
+
+The 3-sigma and 5-sigma comparison is useful for measurement-quality review. The 3-sigma threshold crosses in 14 of 15 fixed-run event bins and has a Monte Carlo mean event crossing fraction of 0.9090. The 5-sigma threshold crosses in 9 of 15 fixed-run event bins and has a Monte Carlo mean event crossing fraction of 0.4620. The higher threshold is more conservative with respect to background excursions, but it reduces elevated-bin persistence above threshold and shifts the median first crossing later.
+
+The results describe gross-count statistical behavior under controlled assumptions. The analysis does not identify radionuclides, estimate detector efficiency, fit spectral peaks, model angular response, or convert count excess to dose rate. Those quantities require calibration information and detector-specific response modeling beyond the count sequence analyzed here \cite{Knoll2010,MARLAP2004}.
+
+% ============================================================
+\section{Limitations}
+
+The model assumes a stationary background over the two-hour window and uses independent Poisson sampling for each time bin. Real detector data can exhibit background drift, environmental covariance, electronic artifacts, gain shifts, dead time, changing geometry, and calibration effects. The simulation also treats the detector as a gross-count instrument, so it does not include spectroscopy, energy-window selection, peak fitting, or isotope-specific response.
+
+The Monte Carlo results estimate crossing behavior under the same assumptions as the synthetic model. They do not replace detector calibration, uncertainty budgeting, environmental background characterization, quality-control checks, or documented data-quality objectives. A production-quality detector QA study would require instrument-specific calibration and a more complete measurement-quality framework \cite{ISO11929,MARLAP2004}.
+
+% ============================================================
+\section{Reproducibility}
+
+The workflow is organized around two Python scripts and one MATLAB plotting script. The primary commands are:
+
+\begin{flushleft}
+\scriptsize\ttfamily
+python src/simulate\_counts.py\\
+python src/threshold\_analysis.py\\
+python src/threshold\_analysis.py --n-trials 10000
+\end{flushleft}
+
+The first command writes the background-only and signal-plus-background count sequences. The second command writes the threshold-crossing table, false-positive summary table, analytical Poisson tail summary, run manifest, and Python figures. The third command writes repeated-trial Monte Carlo background and event-detection summaries. The MATLAB script \path{matlab/plot_detector_threshold_figures.m} recreates polished report figures from the generated CSV files.
+
+The generated outputs include the count sequences, threshold-crossing table, false-positive summary, background-tail summary, Monte Carlo summaries, and run manifest in \path{outputs/}. The report figures are stored in \path{images/} for Overleaf compilation and in \path{figures/} for repository review.
+
+% ============================================================
+\section{Conclusion}
+
+This study presents a reproducible detector-counting workflow that connects Poisson background variability, estimated n-sigma thresholds, empirical crossing fractions, analytical tail probabilities, repeated-trial Monte Carlo summaries, and elevated-interval threshold behavior. For the fixed D001 simulation, the 3-sigma threshold produces no observed background crossings and crosses during 14 of 15 elevated bins. The analytical and Monte Carlo results still assign a nonzero probability to at least one \(3\sigma\) background crossing over a 120-bin run, clarifying the difference between finite-sample observations and model-based tail behavior. The 5-sigma threshold also produces no observed background crossings but crosses during only 9 of 15 fixed-run elevated bins and has a lower Monte Carlo mean event crossing fraction. The result is a clear demonstration of the sensitivity-specificity tradeoff that underlies threshold-based gross-count review.
+
+% ============================================================
+\section*{Acknowledgment of computational tools used}
+
+Calculations, scripts, figures, tables, and report checks used \textit{Python}, \textit{NumPy}, \textit{SciPy}, \textit{Matplotlib}, \textit{MATLAB}, and \textit{ChatGPT (OpenAI)}. Python, NumPy, and SciPy were used for Poisson sampling, threshold calculations, analytical exceedance probabilities, and Monte Carlo summaries. Matplotlib and MATLAB were used to generate and polish the report figures. ChatGPT was used as a drafting and review aid for LaTeX structure, prose revision, and consistency checks. Final numerical results were generated by the project scripts, and the reported values were checked against the CSV outputs produced by those scripts.
+
+\FloatBarrier
+
+\begin{thebibliography}{9}
+
+\bibitem{Currie1968}
+L. A. Currie.
+Limits for qualitative detection and quantitative determination: Application to radiochemistry.
+\emph{Analytical Chemistry}, 40(3):586--593, 1968.
+\url{https://doi.org/10.1021/ac60259a007}.
+
+\bibitem{Knoll2010}
+G. F. Knoll.
+\emph{Radiation Detection and Measurement}.
+4th edition, John Wiley \& Sons, Hoboken, NJ, 2010.
+ISBN 978-0470131480.
+
+\bibitem{ISO11929}
+International Organization for Standardization.
+\emph{ISO 11929-1:2025, Determination of the Characteristic Limits
+(Decision Threshold, Detection Limit and Limits of the Coverage Interval)
+for Measurements of Ionizing Radiation---Fundamentals and Application---Part 1:
+Elementary Applications}.
+ISO, Geneva, 2025.
+
+\bibitem{MARLAP2004}
+U.S. Environmental Protection Agency, U.S. Department of Defense, U.S. Department of Energy,
+U.S. Department of Homeland Security, U.S. Nuclear Regulatory Commission,
+U.S. Food and Drug Administration, U.S. Geological Survey, and National Institute of Standards and Technology.
+\emph{Multi-Agency Radiological Laboratory Analytical Protocols Manual (MARLAP)}.
+NUREG-1576, EPA 402-B-04-001A, NTIS PB2004-105421, July 2004.
+
+\bibitem{NISTHandbook}
+NIST/SEMATECH.
+\emph{e-Handbook of Statistical Methods}.
+National Institute of Standards and Technology.
+DOI: \url{https://doi.org/10.18434/M32189}.
+
+\end{thebibliography}
+
+\end{document}
