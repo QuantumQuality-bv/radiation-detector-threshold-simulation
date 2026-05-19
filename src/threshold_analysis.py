@@ -261,6 +261,8 @@ def configure_matplotlib() -> None:
             "font.size": 11,
             "axes.labelsize": 12,
             "axes.titlesize": 13,
+            "axes.titlecolor": "black",
+            "axes.titleweight": "bold",
             "legend.fontsize": 9,
             "xtick.labelsize": 10,
             "ytick.labelsize": 10,
@@ -307,7 +309,7 @@ def plot_background(background_df: pd.DataFrame, background_mean: float, thresho
     ax.axhline(background_mean, color="0.25", linestyle="--", linewidth=1.8, label="Estimated background mean")
     ax.axhline(thresholds[3], color="#d62728", linestyle=":", linewidth=2.0, label="3-sigma threshold")
     ax.axhline(thresholds[5], color="#9467bd", linestyle="-.", linewidth=2.0, label="5-sigma threshold")
-    ax.set_title("Background-Only Synthetic Detector Counts")
+    ax.set_title("Background-Only Synthetic Detector Counts", color="black", fontweight="bold", pad=12)
     ax.set_xlabel("Time (minutes)")
     ax.set_ylabel("Observed counts per 60 s")
     finish_axes(ax)
@@ -333,7 +335,7 @@ def plot_signal(signal_df: pd.DataFrame, thresholds: dict[int, float]) -> None:
     handles, labels = ax.get_legend_handles_labels()
     unique = dict(zip(labels, handles))
     ax.legend(unique.values(), unique.keys(), loc="best", frameon=True, facecolor="white", edgecolor="0.7")
-    ax.set_title("Signal-Plus-Background Synthetic Detector Counts")
+    ax.set_title("Signal-Plus-Background Synthetic Detector Counts", color="black", fontweight="bold", pad=12)
     ax.set_xlabel("Time (minutes)")
     ax.set_ylabel("Observed counts per 60 s")
     finish_axes(ax)
@@ -373,7 +375,7 @@ def plot_zoom(signal_df: pd.DataFrame, thresholds: dict[int, float]) -> None:
     handles, labels = ax.get_legend_handles_labels()
     unique = dict(zip(labels, handles))
     ax.legend(unique.values(), unique.keys(), loc="best", frameon=True, facecolor="white", edgecolor="0.7")
-    ax.set_title("Zoom Around First Synthetic Elevated-Count Interval")
+    ax.set_title("Zoom Around First Synthetic Elevated-Count Interval", color="black", fontweight="bold", pad=12)
     ax.set_xlabel("Time (minutes)")
     ax.set_ylabel("Observed counts per 60 s")
     finish_axes(ax)
@@ -408,7 +410,7 @@ def plot_false_positive(summary_df: pd.DataFrame) -> None:
                 fontsize=8,
                 color="0.25",
             )
-    ax.set_title("Background Threshold-Crossing Probability vs Threshold Multiplier")
+    ax.set_title("Background Threshold-Crossing Probability\nvs Threshold Multiplier", color="black", fontweight="bold", pad=12)
     ax.set_xlabel("Threshold multiplier n")
     ax.set_ylabel("Background crossing probability / fraction")
     ax.set_xticks(THRESHOLD_SIGMAS)

@@ -36,7 +36,7 @@ yline(threshold3, ':', '3-sigma threshold', ...
     'Color', [0.84 0.15 0.16], 'LineWidth', 2.0, 'DisplayName', '3-sigma threshold');
 yline(threshold5, '-.', '5-sigma threshold', ...
     'Color', [0.58 0.40 0.74], 'LineWidth', 2.0, 'DisplayName', '5-sigma threshold');
-title('Background-Only Synthetic Detector Counts');
+title('Background-Only Synthetic Detector Counts', 'Color', 'k', 'FontWeight', 'bold');
 xlabel('Time (minutes)');
 ylabel('Observed counts per 60 s');
 styleAxes(gca);
@@ -54,7 +54,7 @@ yline(threshold3, ':', '3-sigma threshold', ...
     'Color', [0.84 0.15 0.16], 'LineWidth', 2.0, 'DisplayName', '3-sigma threshold');
 yline(threshold5, '-.', '5-sigma threshold', ...
     'Color', [0.58 0.40 0.74], 'LineWidth', 2.0, 'DisplayName', '5-sigma threshold');
-title('Signal-Plus-Background Synthetic Detector Counts');
+title('Signal-Plus-Background Synthetic Detector Counts', 'Color', 'k', 'FontWeight', 'bold');
 xlabel('Time (minutes)');
 ylabel('Observed counts per 60 s');
 styleAxes(gca);
@@ -76,7 +76,7 @@ yline(threshold5, '-.', '5-sigma threshold', ...
     'Color', [0.58 0.40 0.74], 'LineWidth', 2.0, 'DisplayName', '5-sigma threshold');
 markFirstCrossing(zoomData, threshold3, [0.84 0.15 0.16], 'First 3-sigma crossing');
 markFirstCrossing(zoomData, threshold5, [0.58 0.40 0.74], 'First 5-sigma crossing');
-title('Zoom Around First Synthetic Elevated-Count Interval');
+title('Zoom Around First Synthetic Elevated-Count Interval', 'Color', 'k', 'FontWeight', 'bold');
 xlabel('Time (minutes)');
 ylabel('Observed counts per 60 s');
 styleAxes(gca);
@@ -108,7 +108,7 @@ for k = find(zeroRows)'
     text(x(k), empiricalForPlot(k) * 1.7, '0 observed', ...
         'HorizontalAlignment', 'center', 'FontSize', 8, 'Color', [0.25 0.25 0.25]);
 end
-title('Background Threshold-Crossing Probability vs Threshold Multiplier');
+title({'Background Threshold-Crossing Probability', 'vs Threshold Multiplier'}, 'Color', 'k', 'FontWeight', 'bold');
 xlabel('Threshold multiplier n');
 ylabel('Background crossing probability / fraction');
 xticks([2 3 4 5]);
