@@ -4,6 +4,22 @@ A compact synthetic detector-counting project for Poisson background simulation,
 
 The project uses synthetic gross-count data for a single detector proxy. It is intended as a reproducible data-analysis and technical-reporting example, not an instrument certification package or dose-assessment tool.
 
+## Key result
+
+Increasing the threshold multiplier reduced background-only crossings, but also reduced the fraction of elevated-count bins that crossed threshold. In the fixed synthetic run, the 3-sigma threshold crossed during 14 of 15 elevated bins, while the 5-sigma threshold crossed during 9 of 15 elevated bins.
+
+The main lesson is that a threshold crossing is a statistical review signal, not certainty. Threshold selection changes the balance between sensitivity, false-positive behavior, and delayed or missed elevated intervals.
+
+## Figures
+
+The signal-plus-background sequence shows two controlled elevated-count intervals compared with the 3-sigma and 5-sigma review thresholds.
+
+![Signal-plus-background detector counts with 3-sigma and 5-sigma thresholds](figures/signal_plus_background_counts_matlab.png)
+
+The threshold-probability figure compares fixed-run empirical crossings, analytical Poisson exceedance probabilities, and the probability of at least one background crossing over the full 120-minute sequence.
+
+![Background threshold-crossing probability versus threshold multiplier](figures/false_positive_rate_vs_threshold_matlab.png)
+
 ## What this repository demonstrates
 
 - Poisson simulation of detector background counts
@@ -15,11 +31,35 @@ The project uses synthetic gross-count data for a single detector proxy. It is i
 - Monte Carlo false-positive and event-crossing summaries
 - Matplotlib and MATLAB figure generation
 - A short LaTeX technical report with reproducible tables and figures
+- Basic verification tests for generated outputs and threshold calculations
+
+## Quick start
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python src/simulate_counts.py
+python src/threshold_analysis.py
+python src/threshold_analysis.py --n-trials 10000
+python -m unittest discover -s tests
+```
+
+On Windows PowerShell:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe src\simulate_counts.py
+.\.venv\Scripts\python.exe src\threshold_analysis.py
+.\.venv\Scripts\python.exe src\threshold_analysis.py --n-trials 10000
+.\.venv\Scripts\python.exe -m unittest discover -s tests
+```
 
 ## Repository layout
 
 ```text
-radiation-detector-threshold-demo/
+radiation-detector-threshold-simulation/
   README.md
   LICENSE
   Makefile
@@ -60,29 +100,6 @@ radiation-detector-threshold-demo/
   tests/
     test_simulation_outputs.py
     test_threshold_analysis.py
-```
-
-## Quick start
-
-```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-python src/simulate_counts.py
-python src/threshold_analysis.py
-python src/threshold_analysis.py --n-trials 10000
-python -m unittest discover -s tests
-```
-
-On Windows PowerShell:
-
-```powershell
-python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
-.\.venv\Scripts\python.exe src\simulate_counts.py
-.\.venv\Scripts\python.exe src\threshold_analysis.py
-.\.venv\Scripts\python.exe src\threshold_analysis.py --n-trials 10000
-.\.venv\Scripts\python.exe -m unittest discover -s tests
 ```
 
 ## MATLAB figure export
@@ -146,7 +163,9 @@ The tests check row counts, event interval construction, threshold formulas, pro
 
 ## Limitations
 
-The model assumes a stationary background and independent Poisson sampling over one-minute bins. It does not model spectroscopy, calibration drift, detector dead time, angular response, isotope identification, detector efficiency, environmental transport, dose conversion, or field deployment. The results are suitable for demonstrating detector-counting data analysis and threshold interpretation.
+The model assumes a stationary background and independent Poisson sampling over one-minute bins. It does not model spectroscopy, calibration drift, detector dead time, angular response, isotope identification, detector efficiency, environmental transport, dose conversion, or field deployment.
+
+The results are suitable for demonstrating detector-counting data analysis, threshold behavior, Monte Carlo summaries, and measurement-quality interpretation under controlled synthetic assumptions.
 
 ## Last verification
 
